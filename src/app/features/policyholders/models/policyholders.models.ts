@@ -1,10 +1,11 @@
 import { BadgeTone } from '../../../shared/components/status-badge';
 
-/** Tipos de las respuestas utilizadas por PolicyholderController. */
+/** Tipos de los DTO utilizados por PolicyholderController. */
 export type PersonType = 'INDIVIDUAL' | 'LEGAL_ENTITY';
 export type PolicyholderStatus = 'ACTIVE' | 'INACTIVE';
+export type DocumentType = 'DNI' | 'CUIT';
 
-export interface VehicleResponse {
+export interface Vehicle {
   id: string;
   plate: string;
   brand: string;
@@ -15,7 +16,7 @@ export interface VehicleResponse {
   covered: boolean;
 }
 
-export interface PolicyResponse {
+export interface PolicySummary {
   number: string;
   status: string;
   coverageDescription: string;
@@ -24,7 +25,7 @@ export interface PolicyResponse {
   endDate: string;
 }
 
-export interface ClaimResponse {
+export interface ClaimSummary {
   number: string;
   status: string;
   vehicleId: string;
@@ -33,7 +34,7 @@ export interface ClaimResponse {
   reportedDate: string;
 }
 
-export interface PolicyholderResponse {
+export interface Policyholder {
   id: string;
   personType: PersonType;
   name: string;
@@ -45,9 +46,9 @@ export interface PolicyholderResponse {
   address: string | null;
   vehicleCount: number;
   activePolicyCount: number;
-  vehicles: VehicleResponse[];
-  policies: PolicyResponse[];
-  claims: ClaimResponse[];
+  vehicles: Vehicle[];
+  policies: PolicySummary[];
+  claims: ClaimSummary[];
   updatedAt: string;
 }
 
@@ -78,17 +79,32 @@ export interface PolicyholderFilters {
 
 export const POLICYHOLDER_STATUS: Record<PolicyholderStatus, { label: string; tone: BadgeTone }> = {
   ACTIVE: { label: 'Activo', tone: 'success' },
-  INACTIVE: { label: 'De baja', tone: 'neutral' },
+  INACTIVE: { label: 'Baja', tone: 'neutral' },
 };
 
-export const POLICY_STATUS: Record<string, { label: string; tone: BadgeTone }> = {
-  ACTIVE: { label: 'Vigente', tone: 'success' },
-  EXPIRED: { label: 'Vencida', tone: 'warning' },
-  CANCELLED: { label: 'Cancelada', tone: 'neutral' },
+export const PERSON_TYPE: Record<PersonType, string> = {
+  INDIVIDUAL: 'Persona física',
+  LEGAL_ENTITY: 'Persona jurídica',
 };
 
-export const CLAIM_STATUS: Record<string, { label: string; tone: BadgeTone }> = {
-  REPORTED: { label: 'Denunciado', tone: 'info' },
-  IN_REVIEW: { label: 'En revisión', tone: 'warning' },
-  CLOSED: { label: 'Cerrado', tone: 'neutral' },
-};
+export function documentType(personType: PersonType): DocumentType {
+  return personType === 'INDIVIDUAL' ? 'DNI' : 'CUIT';
+}
+
+export function policyStatus(status: string): { label: string; tone: BadgeTone } {
+  switch (status) {
+    case 'ACTIVE': return { label: 'Vigente', tone: 'success' };
+    case 'EXPIRED': return { label: 'Vencida', tone: 'warning' };
+    case 'CANCELLED': return { label: 'Cancelada', tone: 'danger' };
+    default: return { label: status, tone: 'neutral' };
+  }
+}
+
+export function claimStatus(status: string): { label: string; tone: BadgeTone } {
+  switch (status) {
+    case 'REPORTED': return { label: 'Denunciado', tone: 'info' };
+    case 'IN_REVIEW': return { label: 'En trámite', tone: 'warning' };
+    case 'CLOSED': return { label: 'Cerrado', tone: 'success' };
+    default: return { label: status, tone: 'neutral' };
+  }
+}

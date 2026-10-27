@@ -1,73 +1,47 @@
 <div class="quote-page">
   <header class="quote-header">
-    <div>
-      <span class="quote-brand">◉ ALLIANZ</span>
-      <h1>Cotizador de seguro de auto</h1>
-      <p>Compará coberturas y obtené tu cotización sin registrarte.</p>
-    </div>
+    <div><div class="quote-brand">◉ ALLIANZ</div><h1>Cotizador de seguro de auto</h1><p>Compará coberturas y obtené tu cotización sin registrarte.</p></div>
     @if (quote(); as saved) {
-      <div class="quote-ticket" aria-live="polite">
-        <div class="ticket-top"><span>COTIZACIÓN N.º</span><span class="saved-badge">Guardada</span></div>
-        <strong>{{ saved.number }}</strong>
-        <span>Válida hasta el {{ saved.expiresOn | date: 'dd/MM/yyyy' }} · 15 días</span>
-      </div>
+      <div class="quote-number"><div class="quote-number__top"><span>COTIZACIÓN N.º</span><span class="saved-badge">Guardada</span></div><strong>{{ saved.number }}</strong><small>Válida hasta el {{ saved.expiresOn | date: 'dd/MM/yyyy' }} · 15 días</small></div>
     }
   </header>
-
-  <main class="quote-layout">
-    <section class="quote-panel" aria-labelledby="details-title">
-      <div class="panel-heading"><h2 id="details-title">Datos para cotizar</h2><p>Revisá los datos y actualizá los precios cuando quieras.</p></div>
-      @let catalog = catalogState();
-      @switch (catalog.status) {
-        @case ('loading') { <div class="panel-body"><app-loading-state message="Cargando vehículos…" /></div> }
-        @case ('error') { <div class="panel-body"><app-error-alert [message]="catalog.message" /></div> }
-        @case ('empty') { <div class="panel-body"><app-empty-state message="No hay vehículos disponibles para esta selección" /></div> }
-        @case ('ready') {
-          <form class="panel-body" [formGroup]="form" (ngSubmit)="save(catalog.data.items)" novalidate>
-            @if (saveError(); as message) { <p class="feedback" role="alert">{{ message }}</p> }
-            <fieldset><legend>Vehículo</legend>
-              <div class="field-grid">
-                <div class="form-field"><label for="quote-brand">Marca *</label><select id="quote-brand" formControlName="brand" (change)="brandChanged()" [attr.aria-invalid]="errorFor('brand') ? 'true' : null" [attr.aria-describedby]="errorFor('brand') ? 'brand-error' : null"><option value="">Seleccioná marca</option>@for (brand of brands(catalog.data.items); track brand) { <option [value]="brand">{{ brand }}</option> }</select>@if (errorFor('brand'); as message) { <span id="brand-error" class="form-field__error">{{ message }}</span> }</div>
-                <div class="form-field"><label for="quote-model">Modelo *</label><select id="quote-model" formControlName="model" (change)="modelChanged()" [attr.aria-invalid]="errorFor('model') ? 'true' : null" [attr.aria-describedby]="errorFor('model') ? 'model-error' : null"><option value="">Seleccioná modelo</option>@for (model of models(catalog.data.items); track model) { <option [value]="model">{{ model }}</option> }</select>@if (errorFor('model'); as message) { <span id="model-error" class="form-field__error">{{ message }}</span> }</div>
+  <main class="quote-main">
+    <section class="quote-panel" aria-labelledby="quote-form-title">
+      <div class="panel-heading"><h2 id="quote-form-title">Datos para cotizar</h2><p>Revisá los datos y actualizá los precios cuando quieras.</p></div>
+      <form class="quote-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (saveError(); as message) { <div class="form-error" role="alert">{{ message }}</div> }
+        <div class="field-section"><h3>Vehículo</h3>
+          @let catalog = catalogState();
+          @switch (catalog.status) {
+            @case ('loading') { <app-loading-state message="Cargando catálogo de vehículos…" /> }
+            @case ('error') { <app-error-alert [message]="catalog.message" (retry)="reloadCatalog()" /> }
+            @case ('empty') { <app-empty-state message="No hay vehículos disponibles para esta selección" /> }
+            @case ('ready') {
+              <div class="field-row">
+                <div class="field"><label for="quote-brand">Marca</label><select id="quote-brand" formControlName="brand" (change)="changeBrand()" [attr.aria-invalid]="errorFor('brand') ? 'true' : null" [attr.aria-describedby]="errorFor('brand') ? 'brand-error' : null"><option value="">Seleccioná una marca</option>@for (brand of brands(); track brand) { <option [value]="brand">{{ brand }}</option> }</select>@if (errorFor('brand'); as error) { <small id="brand-error" class="field-error">{{ error }}</small> }</div>
+                <div class="field"><label for="quote-model">Modelo</label><select id="quote-model" formControlName="model" (change)="changeModel()" [attr.aria-invalid]="errorFor('model') ? 'true' : null" [attr.aria-describedby]="errorFor('model') ? 'model-error' : null"><option value="">Seleccioná un modelo</option>@for (model of models(); track model) { <option [value]="model">{{ model }}</option> }</select>@if (errorFor('model'); as error) { <small id="model-error" class="field-error">{{ error }}</small> }</div>
               </div>
-              <div class="form-field"><label for="quote-version">Versión *</label><select id="quote-version" formControlName="version" (change)="versionChanged()" [attr.aria-invalid]="errorFor('version') ? 'true' : null" [attr.aria-describedby]="errorFor('version') ? 'version-error' : null"><option value="">Seleccioná versión</option>@for (version of versions(catalog.data.items); track version) { <option [value]="version">{{ version }}</option> }</select>@if (errorFor('version'); as message) { <span id="version-error" class="form-field__error">{{ message }}</span> }</div>
-              <div class="field-grid">
-                <div class="form-field"><label for="quote-year">Año *</label><select id="quote-year" formControlName="year" [attr.aria-invalid]="errorFor('year') ? 'true' : null" [attr.aria-describedby]="errorFor('year') ? 'year-error' : null"><option [ngValue]="0">Seleccioná año</option>@for (year of years(catalog.data.items); track year) { <option [ngValue]="year">{{ year }}</option> }</select>@if (errorFor('year'); as message) { <span id="year-error" class="form-field__error">{{ message }}</span> }</div>
-                <div class="form-field"><label for="quote-use">Uso *</label><select id="quote-use" formControlName="use"><option value="PRIVATE">Particular</option><option value="COMMERCIAL">Comercial</option></select></div>
-              </div>
-              <div class="field-grid">
-                <div class="form-field"><label for="quote-gnc">¿Tiene GNC? *</label><select id="quote-gnc" formControlName="gnc"><option [ngValue]="false">No</option><option [ngValue]="true">Sí</option></select></div>
-                <div class="form-field"><label for="quote-postal">Código postal de guarda *</label><input id="quote-postal" formControlName="postalCode" inputmode="numeric" maxlength="4" [attr.aria-invalid]="errorFor('postalCode') ? 'true' : null" [attr.aria-describedby]="errorFor('postalCode') ? 'postal-error' : null" />@if (errorFor('postalCode'); as message) { <span id="postal-error" class="form-field__error">{{ message }}</span> }</div>
-              </div>
-            </fieldset>
-            <fieldset class="driver-fields"><legend>Conductor principal</legend>
-              <div class="form-field"><label for="quote-birth">Fecha de nacimiento *</label><input id="quote-birth" type="date" formControlName="birthDate" [attr.aria-invalid]="errorFor('birthDate') ? 'true' : null" [attr.aria-describedby]="errorFor('birthDate') ? 'birth-error' : null" />@if (errorFor('birthDate'); as message) { <span id="birth-error" class="form-field__error">{{ message }}</span> }</div>
-              <div class="field-grid">
-                <div class="form-field"><label for="quote-registration">Años de registro *</label><input id="quote-registration" type="number" min="0" step="1" formControlName="registrationYears" [attr.aria-invalid]="errorFor('registrationYears') ? 'true' : null" [attr.aria-describedby]="errorFor('registrationYears') ? 'registration-error' : null" />@if (errorFor('registrationYears'); as message) { <span id="registration-error" class="form-field__error">{{ message }}</span> }</div>
-                <div class="form-field"><label for="quote-claims">Siniestros últimos 3 años *</label><input id="quote-claims" type="number" min="0" step="1" formControlName="claimsLastThreeYears" [attr.aria-invalid]="errorFor('claimsLastThreeYears') ? 'true' : null" [attr.aria-describedby]="errorFor('claimsLastThreeYears') ? 'claims-error' : null" />@if (errorFor('claimsLastThreeYears'); as message) { <span id="claims-error" class="form-field__error">{{ message }}</span> }</div>
-              </div>
-            </fieldset>
-            <div class="form-field"><label for="quote-payment">Medio de pago *</label><select id="quote-payment" formControlName="paymentMethod"><option value="AUTOMATIC_DEBIT">Débito automático</option><option value="OTHER">Otro medio de pago</option></select></div>
-            <div class="form-field"><label for="quote-dni">DNI *</label><input id="quote-dni" formControlName="dni" inputmode="numeric" maxlength="8" [attr.aria-invalid]="errorFor('dni') ? 'true' : null" [attr.aria-describedby]="errorFor('dni') ? 'dni-error' : null" />@if (errorFor('dni'); as message) { <span id="dni-error" class="form-field__error">{{ message }}</span> }</div>
-            <button class="button submit-button" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : quote() ? 'Actualizar cotización' : 'Cotizar y guardar' }}</button>
-          </form>
-        }
-      }
-    </section>
-
-    <section class="results" aria-labelledby="coverage-title">
-      <div class="results-heading"><div><h2 id="coverage-title">Coberturas disponibles</h2>@if (quote(); as saved) { <span>{{ saved.vehicle.brand }} {{ saved.vehicle.model }} {{ saved.vehicle.version }} · {{ saved.vehicle.year }} · uso {{ saved.use === 'PRIVATE' ? 'particular' : 'comercial' }}</span> } @else { <span>Completá tus datos para comparar las coberturas.</span> }</div>@if (quote(); as saved) { <div class="insured-amount"><small>SUMA ASEGURADA DEL VEHÍCULO</small><strong>{{ saved.insuredAmount | money }}</strong></div> }</div>
-      @if (quote(); as saved) {
-        <p class="results-note">ⓘ Los premios mensuales ya incluyen los descuentos aplicados.</p>
-        <div class="coverage-grid">
-          @for (coverage of saved.coverages; track coverage.type) {
-            <article class="coverage-card"><div class="coverage-title"><span class="shield" aria-hidden="true">◇</span><h3>{{ coverage.name }}</h3></div><div><span>Premio mensual</span><strong>{{ coverage.monthlyPremium | money }}</strong></div></article>
+              <div class="field"><label for="quote-version">Versión</label><select id="quote-version" formControlName="version" (change)="changeVersion()" [attr.aria-invalid]="errorFor('version') ? 'true' : null" [attr.aria-describedby]="errorFor('version') ? 'version-error' : null"><option value="">Seleccioná una versión</option>@for (version of versions(); track version) { <option [value]="version">{{ version }}</option> }</select>@if (errorFor('version'); as error) { <small id="version-error" class="field-error">{{ error }}</small> }</div>
+              <div class="field-row"><div class="field"><label for="quote-year">Año</label><select id="quote-year" formControlName="year" [attr.aria-invalid]="errorFor('year') ? 'true' : null" [attr.aria-describedby]="errorFor('year') ? 'year-error' : null"><option [ngValue]="0">Seleccioná un año</option>@for (year of years(); track year) { <option [ngValue]="year">{{ year }}</option> }</select>@if (errorFor('year'); as error) { <small id="year-error" class="field-error">{{ error }}</small> }</div><div class="field"><label for="quote-use">Uso</label><select id="quote-use" formControlName="use"><option value="PRIVATE">Particular</option><option value="COMMERCIAL">Comercial</option></select></div></div>
+              @if (form.controls.brand.value && models().length === 0 || form.controls.model.value && versions().length === 0 || form.controls.version.value && years().length === 0) { <p class="field-error" role="status">No hay vehículos disponibles para esta selección</p> }
+            }
           }
+          <div class="field-row"><div class="field"><label for="quote-gnc">¿Tiene GNC?</label><select id="quote-gnc" formControlName="gnc"><option [ngValue]="false">No</option><option [ngValue]="true">Sí</option></select></div><div class="field"><label for="quote-postal">Código postal de guarda</label><input id="quote-postal" formControlName="postalCode" inputmode="numeric" maxlength="4" [attr.aria-invalid]="errorFor('postalCode') ? 'true' : null" [attr.aria-describedby]="errorFor('postalCode') ? 'postal-error' : null" />@if (errorFor('postalCode'); as error) { <small id="postal-error" class="field-error">{{ error }}</small> }</div></div>
         </div>
-        <div class="discount-card"><div><strong>Descuentos aplicados</strong>@for (discount of saved.discounts; track discount.type) { <span>{{ discount.name }}</span> } @if (saved.discounts.length === 0) { <span>No se aplicaron descuentos.</span> }</div><div class="discount-values"><strong>&nbsp;</strong>@for (discount of saved.discounts; track discount.type) { <span>{{ discount.rate * 100 }} %</span> }<small>Incluidos en los premios</small></div></div>
-      } @else { <div class="results-placeholder">Los premios, la suma asegurada y los descuentos aparecerán acá cuando guardes una cotización.</div> }
+        <div class="field-section driver"><h3>Conductor principal</h3><div class="field"><label for="quote-birth">Fecha de nacimiento</label><input id="quote-birth" type="date" formControlName="birthDate" [attr.aria-invalid]="errorFor('birthDate') ? 'true' : null" [attr.aria-describedby]="errorFor('birthDate') ? 'birth-error' : null" />@if (errorFor('birthDate'); as error) { <small id="birth-error" class="field-error">{{ error }}</small> }</div><div class="field-row"><div class="field"><label for="quote-years">Años de registro</label><input id="quote-years" type="number" min="0" step="1" formControlName="registrationYears" [attr.aria-invalid]="errorFor('registrationYears') ? 'true' : null" [attr.aria-describedby]="errorFor('registrationYears') ? 'years-error' : null" />@if (errorFor('registrationYears'); as error) { <small id="years-error" class="field-error">{{ error }}</small> }</div><div class="field"><label for="quote-claims">Siniestros últimos 3 años</label><input id="quote-claims" type="number" min="0" step="1" formControlName="claimsLastThreeYears" [attr.aria-invalid]="errorFor('claimsLastThreeYears') ? 'true' : null" [attr.aria-describedby]="errorFor('claimsLastThreeYears') ? 'claims-error' : null" />@if (errorFor('claimsLastThreeYears'); as error) { <small id="claims-error" class="field-error">{{ error }}</small> }</div></div></div>
+        <div class="field"><label for="quote-payment">Medio de pago</label><select id="quote-payment" formControlName="paymentMethod"><option value="AUTOMATIC_DEBIT">Débito automático</option><option value="OTHER">Otro medio de pago</option></select></div>
+        <div class="field"><label for="quote-dni">DNI</label><input id="quote-dni" formControlName="dni" inputmode="numeric" maxlength="8" [attr.aria-invalid]="errorFor('dni') ? 'true' : null" [attr.aria-describedby]="errorFor('dni') ? 'dni-error' : null" />@if (errorFor('dni'); as error) { <small id="dni-error" class="field-error">{{ error }}</small> }</div>
+        <button class="quote-button" type="submit" [disabled]="saving() || catalogState().status !== 'ready'">{{ saving() ? 'Guardando…' : quote() ? 'Actualizar cotización' : 'Cotizar y guardar' }}</button>
+      </form>
+    </section>
+    <section class="results" aria-label="Resultados de la cotización">
+      @if (quote(); as saved) {
+        <div class="results-heading"><div><h2>Coberturas disponibles</h2><span>{{ saved.vehicle.brand }} {{ saved.vehicle.model }} {{ saved.vehicle.version }} · {{ saved.vehicle.year }} · uso {{ saved.use === 'PRIVATE' ? 'particular' : 'comercial' }}</span></div><div class="insured-value"><small>SUMA ASEGURADA DEL VEHÍCULO</small><strong>{{ saved.insuredAmount | money }}</strong></div></div>
+        <div class="results-note"><span aria-hidden="true">ⓘ</span> Los premios mensuales ya incluyen los descuentos aplicados.</div>
+        <div class="coverage-grid">@for (coverage of saved.coverages; track coverage.type) { <article class="coverage-card"><div class="coverage-title"><span class="coverage-icon" aria-hidden="true">◇</span><h3>{{ coverage.name }}</h3></div><div class="coverage-price"><span>Premio mensual</span><strong>{{ coverage.monthlyPremium | money }}</strong></div></article> }</div>
+        <div class="discounts"><div><strong>Descuentos aplicados</strong>@for (discount of saved.discounts; track discount.type) { <span>{{ discount.name }}</span> }@if (saved.discounts.length === 0) { <span>No se aplicaron descuentos.</span> }</div><div class="discount-rates">@for (discount of saved.discounts; track discount.type) { <strong>{{ discount.rate | percent: '1.0-0' }}</strong> }<small>Incluidos en los premios</small></div></div>
+      } @else { <div class="results-heading"><div><h2>Coberturas disponibles</h2><span>Completá los datos para ver los premios mensuales.</span></div></div><app-empty-state message="Cotizá para comparar las cuatro coberturas disponibles." /> }
     </section>
   </main>
-
-  <section class="recovery" aria-labelledby="recovery-title"><div class="recovery-intro"><h2 id="recovery-title">¿Ya tenés una cotización?</h2><p>Recuperala durante sus 15 días de vigencia con el número de cotización y tu DNI.</p></div><form [formGroup]="recoveryForm" (ngSubmit)="recover()" novalidate><div class="form-field"><label for="recovery-number">Número de cotización</label><input id="recovery-number" formControlName="number" placeholder="Ej.: AUT-2026-08417" [attr.aria-invalid]="recoveryErrorFor('number') ? 'true' : null" [attr.aria-describedby]="recoveryErrorFor('number') ? 'recovery-number-error' : null" />@if (recoveryErrorFor('number'); as message) { <span id="recovery-number-error" class="form-field__error">{{ message }}</span> }</div><div class="form-field"><label for="recovery-dni">DNI</label><input id="recovery-dni" formControlName="dni" inputmode="numeric" maxlength="8" placeholder="Tu DNI" [attr.aria-invalid]="recoveryErrorFor('dni') ? 'true' : null" [attr.aria-describedby]="recoveryErrorFor('dni') ? 'recovery-dni-error' : null" />@if (recoveryErrorFor('dni'); as message) { <span id="recovery-dni-error" class="form-field__error">{{ message }}</span> }</div><button class="button button--secondary" type="submit" [disabled]="recovering()">{{ recovering() ? 'Buscando…' : 'Recuperar cotización' }}</button></form>@if (recoveryError(); as message) { <p class="recovery-error" role="alert">{{ message }}</p> }</section>
+  <section class="recovery" aria-labelledby="recovery-title"><div class="recovery-copy"><h2 id="recovery-title">¿Ya tenés una cotización?</h2><p>Recuperala durante sus 15 días de vigencia con el número de cotización y tu DNI.</p></div><form [formGroup]="recoveryForm" (ngSubmit)="recover()" novalidate><div class="field"><label for="recovery-number">Número de cotización</label><input id="recovery-number" formControlName="number" placeholder="Ej.: AUT-2026-08417" [attr.aria-invalid]="recoveryFieldError('number') ? 'true' : null" [attr.aria-describedby]="recoveryFieldError('number') ? 'recovery-number-error' : null" />@if (recoveryFieldError('number'); as error) { <small id="recovery-number-error" class="field-error">{{ error }}</small> }</div><div class="field"><label for="recovery-dni">DNI</label><input id="recovery-dni" formControlName="dni" inputmode="numeric" maxlength="8" placeholder="Tu DNI" [attr.aria-invalid]="recoveryFieldError('dni') ? 'true' : null" [attr.aria-describedby]="recoveryFieldError('dni') ? 'recovery-dni-error' : null" />@if (recoveryFieldError('dni'); as error) { <small id="recovery-dni-error" class="field-error">{{ error }}</small> }</div><button class="recovery-button" type="submit" [disabled]="recovering()">{{ recovering() ? 'Recuperando…' : 'Recuperar cotización' }}</button></form>@if (recoveryError(); as message) { <p class="recovery-error" role="alert">{{ message }}</p> }</section>
 </div>

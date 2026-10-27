@@ -1,1 +1,1 @@
-.back { display: inline-block; margin-bottom: var(--space-md); } .card { max-width: 800px; } .form-grid { margin-bottom: var(--space-lg); }
+:host { display:block; max-width:860px; margin:auto; padding:32px; color:var(--text-primary); background:var(--background); font-family:'Open Sans',Arial,sans-serif; } h1 { margin:20px 0 8px; } p { color:var(--text-secondary); } .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; } .form-actions { margin-top:24px; } @media(max-width:600px) { :host { padding:16px; } }

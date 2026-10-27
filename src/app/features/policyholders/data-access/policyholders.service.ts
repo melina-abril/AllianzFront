@@ -4,49 +4,48 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { apiUrl } from '../../../core/http/api-url';
 import { Page } from '../../../shared/models/page';
-import { PolicyholderFilters, PolicyholderRequest, PolicyholderResponse, VehicleRequest, VehicleResponse } from '../models/policyholders.models';
+import { Policyholder, PolicyholderFilters, PolicyholderRequest, Vehicle, VehicleRequest } from '../models/policyholders.models';
 import { addVehicleMock, createPolicyholderMock, deactivatePolicyholderMock, getPolicyholderMock, listPolicyholdersMock, updatePolicyholderMock, updateVehicleMock } from './policyholders.mock';
 
-/** Un método por operación del contrato; el mock se reemplaza al conectar el backend. */
+/** Un método por endpoint; los mocks se reemplazan al conectar el backend. */
 @Injectable({ providedIn: 'root' })
 export class PolicyholdersService {
   private readonly http = inject(HttpClient);
-  private readonly path = '/api/policyholders';
 
-  listPolicyholders(filters: PolicyholderFilters): Observable<Page<PolicyholderResponse>> {
+  listPolicyholders(filters: PolicyholderFilters): Observable<Page<Policyholder>> {
     if (environment.useMock) return listPolicyholdersMock(filters);
     let params = new HttpParams().set('page', filters.page).set('size', filters.size);
     if (filters.search.trim()) params = params.set('search', filters.search.trim());
-    return this.http.get<Page<PolicyholderResponse>>(apiUrl(this.path), { params });
+    return this.http.get<Page<Policyholder>>(apiUrl('/api/policyholders'), { params });
   }
 
-  getPolicyholder(id: string): Observable<PolicyholderResponse> {
+  getPolicyholder(id: string): Observable<Policyholder> {
     if (environment.useMock) return getPolicyholderMock(id);
-    return this.http.get<PolicyholderResponse>(apiUrl(`${this.path}/${encodeURIComponent(id)}`));
+    return this.http.get<Policyholder>(apiUrl(`/api/policyholders/${encodeURIComponent(id)}`));
   }
 
-  createPolicyholder(request: PolicyholderRequest): Observable<PolicyholderResponse> {
+  createPolicyholder(request: PolicyholderRequest): Observable<Policyholder> {
     if (environment.useMock) return createPolicyholderMock(request);
-    return this.http.post<PolicyholderResponse>(apiUrl(this.path), request);
+    return this.http.post<Policyholder>(apiUrl('/api/policyholders'), request);
   }
 
-  updatePolicyholder(id: string, request: PolicyholderRequest): Observable<PolicyholderResponse> {
+  updatePolicyholder(id: string, request: PolicyholderRequest): Observable<Policyholder> {
     if (environment.useMock) return updatePolicyholderMock(id, request);
-    return this.http.put<PolicyholderResponse>(apiUrl(`${this.path}/${encodeURIComponent(id)}`), request);
+    return this.http.put<Policyholder>(apiUrl(`/api/policyholders/${encodeURIComponent(id)}`), request);
   }
 
-  addVehicle(id: string, request: VehicleRequest): Observable<VehicleResponse> {
+  addVehicle(id: string, request: VehicleRequest): Observable<Vehicle> {
     if (environment.useMock) return addVehicleMock(id, request);
-    return this.http.post<VehicleResponse>(apiUrl(`${this.path}/${encodeURIComponent(id)}/vehicles`), request);
+    return this.http.post<Vehicle>(apiUrl(`/api/policyholders/${encodeURIComponent(id)}/vehicles`), request);
   }
 
-  updateVehicle(id: string, vehicleId: string, request: VehicleRequest): Observable<VehicleResponse> {
+  updateVehicle(id: string, vehicleId: string, request: VehicleRequest): Observable<Vehicle> {
     if (environment.useMock) return updateVehicleMock(id, vehicleId, request);
-    return this.http.put<VehicleResponse>(apiUrl(`${this.path}/${encodeURIComponent(id)}/vehicles/${encodeURIComponent(vehicleId)}`), request);
+    return this.http.put<Vehicle>(apiUrl(`/api/policyholders/${encodeURIComponent(id)}/vehicles/${encodeURIComponent(vehicleId)}`), request);
   }
 
   deactivatePolicyholder(id: string): Observable<void> {
     if (environment.useMock) return deactivatePolicyholderMock(id);
-    return this.http.delete<void>(apiUrl(`${this.path}/${encodeURIComponent(id)}`));
+    return this.http.delete<void>(apiUrl(`/api/policyholders/${encodeURIComponent(id)}`));
   }
 }

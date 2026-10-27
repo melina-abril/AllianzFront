@@ -18,16 +18,28 @@ interface NavigationItem {
 })
 export class App {
   protected readonly currentUser = inject(CurrentUser);
+
+  protected readonly roles: readonly { value: string; label: string }[] = [
+    { value: 'insured', label: 'Asegurado' },
+    { value: 'producer', label: 'Productor asesor' },
+    { value: 'operator', label: 'Operador de emisión' },
+    { value: 'adjuster', label: 'Liquidador de siniestros' },
+    { value: 'supervisor', label: 'Supervisor' },
+  ];
+
   protected readonly navigation: readonly NavigationItem[] = [
     { label: 'Cotizador de seguro de auto', path: '/quotes' },
     {
       label: 'Asegurados y vehículos',
       path: '/policyholders',
-      roles: ['producer', 'operator', 'adjuster', 'supervisor'],
+      roles: ['producer', 'operator', 'supervisor'],
     },
   ];
 
-  protected changeRole(role: string): void {
-    this.currentUser.setRole(role);
+  protected onRoleChange(event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLSelectElement) {
+      this.currentUser.setRole(target.value);
+    }
   }
 }
