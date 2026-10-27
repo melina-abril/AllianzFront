@@ -1,0 +1,21 @@
+<a [routerLink]="['/policyholders', id()]">← Volver a la ficha</a>
+<app-page-header [title]="isEdit() ? 'Editar vehículo' : 'Agregar vehículo'" description="Los campos marcados con * son obligatorios. La patente no puede repetirse." />
+@let vehicleLoad = loadState();
+@switch (vehicleLoad.status) {
+  @case ('loading') { <p role="status">Cargando vehículo…</p> }
+  @case ('error') { <p role="alert">{{ vehicleLoad.message }}</p> }
+  @default {
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (submitError(); as message) { <p role="alert">{{ message }}</p> }
+      <div class="form-grid">
+        <div class="form-field"><label for="vehicle-plate">Patente *</label><input id="vehicle-plate" formControlName="plate" [attr.aria-invalid]="errorFor('plate') ? 'true' : null" [attr.aria-describedby]="errorFor('plate') ? 'plate-error' : null" />@if (errorFor('plate'); as message) { <span class="form-field__error" id="plate-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="vehicle-brand">Marca *</label><input id="vehicle-brand" formControlName="brand" [attr.aria-invalid]="errorFor('brand') ? 'true' : null" [attr.aria-describedby]="errorFor('brand') ? 'brand-error' : null" />@if (errorFor('brand'); as message) { <span class="form-field__error" id="brand-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="vehicle-model">Modelo *</label><input id="vehicle-model" formControlName="model" [attr.aria-invalid]="errorFor('model') ? 'true' : null" [attr.aria-describedby]="errorFor('model') ? 'model-error' : null" />@if (errorFor('model'); as message) { <span class="form-field__error" id="model-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="vehicle-year">Año *</label><input id="vehicle-year" type="number" min="1900" max="2100" step="1" formControlName="year" [attr.aria-invalid]="errorFor('year') ? 'true' : null" [attr.aria-describedby]="errorFor('year') ? 'year-error' : null" />@if (errorFor('year'); as message) { <span class="form-field__error" id="year-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="vehicle-engine">Motor *</label><input id="vehicle-engine" formControlName="engine" [attr.aria-invalid]="errorFor('engine') ? 'true' : null" [attr.aria-describedby]="errorFor('engine') ? 'engine-error' : null" />@if (errorFor('engine'); as message) { <span class="form-field__error" id="engine-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="vehicle-chassis">Chasis *</label><input id="vehicle-chassis" formControlName="chassis" [attr.aria-invalid]="errorFor('chassis') ? 'true' : null" [attr.aria-describedby]="errorFor('chassis') ? 'chassis-error' : null" />@if (errorFor('chassis'); as message) { <span class="form-field__error" id="chassis-error">{{ message }}</span> }</div>
+      </div>
+      <div class="form-actions"><a class="button button--secondary" [routerLink]="['/policyholders', id()]">Cancelar</a><button class="button" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : isEdit() ? 'Guardar cambios' : 'Agregar vehículo' }}</button></div>
+    </form>
+  }
+}

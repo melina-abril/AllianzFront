@@ -1,0 +1,25 @@
+<div class="app-shell">
+  <header class="app-header">
+    <a class="app-brand" routerLink="/quotes" aria-label="Allianz, ir al cotizador">Allianz <span>Seguros de auto</span></a>
+    <div class="app-session">
+      <span class="app-session__name">{{ currentUser.user().name }}</span>
+      <label for="test-role">Rol de prueba</label>
+      <select id="test-role" #roleSelect [value]="currentUser.user().role" (change)="currentUser.setRole(roleSelect.value)">
+        @for (role of roles; track role.value) {
+          <option [value]="role.value">{{ role.label }}</option>
+        }
+      </select>
+    </div>
+  </header>
+  <div class="app-body">
+    <nav class="app-navigation" aria-label="Navegación principal">
+      <span class="app-navigation__heading">Funcionalidades</span>
+      @for (item of visibleNavigation(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="app-navigation__link--active" class="app-navigation__link">{{ item.label }}</a>
+      }
+    </nav>
+    <main id="main-content" class="app-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

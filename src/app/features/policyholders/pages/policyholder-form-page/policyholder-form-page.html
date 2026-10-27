@@ -1,0 +1,23 @@
+<a routerLink="/policyholders">← Volver a asegurados</a>
+<app-page-header [title]="isEdit() ? 'Editar datos del asegurado' : 'Nuevo asegurado'" description="Los campos marcados con * son obligatorios." />
+@let holderLoad = loadState();
+@switch (holderLoad.status) {
+  @case ('loading') { <p role="status">Cargando asegurado…</p> }
+  @case ('error') { <p role="alert">{{ holderLoad.message }}</p><a routerLink="/policyholders">Volver</a> }
+  @default {
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (submitError(); as message) { <p role="alert">{{ message }}</p> }
+      <div class="form-grid">
+        <div class="form-field"><label for="person-type">Tipo de persona *</label><select id="person-type" formControlName="personType"><option value="NATURAL">Persona física</option><option value="LEGAL">Persona jurídica</option></select></div>
+        <div class="form-field"><label for="holder-name">Nombre o razón social *</label><input id="holder-name" formControlName="name" [attr.aria-invalid]="errorFor('name') ? 'true' : null" [attr.aria-describedby]="errorFor('name') ? 'holder-name-error' : null" />@if (errorFor('name'); as message) { <span class="form-field__error" id="holder-name-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="document-type">Tipo de documento *</label><select id="document-type" formControlName="documentType"><option value="DNI">DNI</option><option value="CUIT">CUIT</option></select></div>
+        <div class="form-field"><label for="document-number">Número de documento *</label><input id="document-number" formControlName="documentNumber" [attr.aria-invalid]="errorFor('documentNumber') ? 'true' : null" [attr.aria-describedby]="errorFor('documentNumber') ? 'document-error' : null" />@if (errorFor('documentNumber'); as message) { <span class="form-field__error" id="document-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="primary-contact">Contacto principal</label><input id="primary-contact" formControlName="primaryContact" [attr.aria-invalid]="errorFor('primaryContact') ? 'true' : null" [attr.aria-describedby]="errorFor('primaryContact') ? 'contact-error' : null" />@if (errorFor('primaryContact'); as message) { <span class="form-field__error" id="contact-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="holder-email">Correo electrónico</label><input id="holder-email" type="email" formControlName="email" [attr.aria-invalid]="errorFor('email') ? 'true' : null" [attr.aria-describedby]="errorFor('email') ? 'email-error' : null" />@if (errorFor('email'); as message) { <span class="form-field__error" id="email-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="holder-phone">Teléfono</label><input id="holder-phone" type="tel" formControlName="phone" [attr.aria-invalid]="errorFor('phone') ? 'true' : null" [attr.aria-describedby]="errorFor('phone') ? 'phone-error' : null" />@if (errorFor('phone'); as message) { <span class="form-field__error" id="phone-error">{{ message }}</span> }</div>
+        <div class="form-field"><label for="holder-address">Domicilio</label><input id="holder-address" formControlName="address" [attr.aria-invalid]="errorFor('address') ? 'true' : null" [attr.aria-describedby]="errorFor('address') ? 'address-error' : null" />@if (errorFor('address'); as message) { <span class="form-field__error" id="address-error">{{ message }}</span> }</div>
+      </div>
+      <div class="form-actions"><a class="button button--secondary" routerLink="/policyholders">Cancelar</a><button class="button" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : isEdit() ? 'Guardar cambios' : 'Crear asegurado' }}</button></div>
+    </form>
+  }
+}
