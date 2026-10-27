@@ -1,96 +1,19 @@
-<app-page-header title="Asegurados y vehículos" description="Consultá y administrá asegurados, vehículos, pólizas y siniestros.">
-  @if (allowed()) { <a class="button" routerLink="/policyholders/new">Nuevo asegurado</a> }
-</app-page-header>
-@if (!allowed()) {
-  <p role="alert" class="card">No tenés permiso para consultar asegurados</p>
-} @else {
-  <div class="holders-layout">
-    <aside class="card" aria-label="Resultados de asegurados">
-      <form (ngSubmit)="search()" role="search" class="holders-search">
-        <div class="form-field"><label for="holder-search">Buscar asegurado</label>
-          <input id="holder-search" type="search" placeholder="Nombre, DNI o CUIT" [formControl]="searchControl" />
-        </div>
-        <button class="button button--secondary" type="submit">Buscar</button>
-      </form>
-      @let list = listState();
-      @switch (list.status) {
-        @case ('loading') { <p role="status">Cargando asegurados…</p> }
-        @case ('error') { <p role="alert">{{ list.message }}</p><button class="button button--secondary" type="button" (click)="retry()">Reintentar</button> }
-        @case ('empty') { <p>No se encontraron asegurados</p> }
-        @case ('ready') {
-          <p aria-live="polite">{{ list.data.totalItems }} asegurados encontrados</p>
-          <div class="holders-results">
-            @for (holder of list.data.items; track holder.id) {
-              <a class="holders-result" [class.holders-result--selected]="selectedId() === holder.id" [attr.aria-current]="selectedId() === holder.id ? 'true' : null" [routerLink]="['/policyholders', holder.id]">
-                <strong>{{ holder.name }}</strong><span>{{ holder.documentType }} {{ holder.documentNumber }}</span>
-                <app-status-badge [label]="holderStatus[holder.status].label" [tone]="holderStatus[holder.status].tone" />
-              </a>
-            }
-          </div>
-          @if (list.data.totalPages > 1) {
-            <nav class="pagination" aria-label="Páginas de asegurados">
-              <button class="button button--secondary" type="button" [disabled]="list.data.page === 0" (click)="pageTo(list.data.page - 1)">Anterior</button>
-              <span>Página {{ list.data.page + 1 }} de {{ list.data.totalPages }}</span>
-              <button class="button button--secondary" type="button" [disabled]="list.data.page + 1 >= list.data.totalPages" (click)="pageTo(list.data.page + 1)">Siguiente</button>
-            </nav>
-          }
-        }
-      }
-    </aside>
-    <main class="holders-detail">
-      @let list = listState();
-      @if (list.status === 'ready' && selectedId()) {
-        @let detail = detailState();
-        @switch (detail.status) {
-          @case ('loading') { <p role="status" class="card">Cargando ficha…</p> }
-          @case ('error') { <p role="alert" class="card">{{ detail.message }}</p><button class="button button--secondary" type="button" (click)="retry()">Reintentar</button> }
-          @case ('empty') { <p class="card">No se encontró el asegurado.</p> }
-          @case ('ready') {
-            @if (detail.data.id === selectedId()) {
-              @let holder = detail.data;
-              <section class="card" aria-labelledby="holder-title">
-                <div class="holders-heading"><div><h2 id="holder-title">{{ holder.name }}</h2><p>{{ holder.personType === 'LEGAL' ? 'Persona jurídica' : 'Persona física' }} · {{ holder.documentType }} {{ holder.documentNumber }}</p><app-status-badge [label]="holderStatus[holder.status].label" [tone]="holderStatus[holder.status].tone" /></div>
-                  <a class="button button--secondary" [routerLink]="['/policyholders', holder.id, 'edit']">Editar datos</a>
-                </div>
-                <dl class="holders-fields">
-                  <div><dt>Contacto principal</dt><dd>{{ holder.primaryContact || 'No informado' }}</dd></div>
-                  <div><dt>Correo electrónico</dt><dd>{{ holder.email || 'No informado' }}</dd></div>
-                  <div><dt>Teléfono</dt><dd>{{ holder.phone || 'No informado' }}</dd></div>
-                  <div><dt>Domicilio</dt><dd>{{ holder.address || 'No informado' }}</dd></div>
-                  <div><dt>Vehículos registrados</dt><dd>{{ holder.vehicleCount }}</dd></div>
-                  <div><dt>Pólizas vigentes</dt><dd>{{ holder.activePolicyCount }}</dd></div>
-                </dl>
-                <div class="holders-note"><span>El DNI o CUIT debe ser único. {{ holder.activePolicyCount > 0 ? 'Este asegurado no puede darse de baja mientras tenga pólizas vigentes.' : '' }}</span>
-                  <button class="button button--danger" type="button" [disabled]="holder.activePolicyCount > 0 || holder.status === 'INACTIVE'" (click)="confirming.set(true)">Dar de baja</button>
-                </div>
-              </section>
-              @if (actionError(); as message) { <p role="alert" class="card">{{ message }}</p> }
-              <section class="card" aria-labelledby="vehicles-title">
-                <div class="holders-heading"><div><h2 id="vehicles-title">Vehículos</h2><p>{{ holder.vehicleCount }} registrados · La patente no puede repetirse.</p></div><a class="button" [routerLink]="['/policyholders', holder.id, 'vehicles', 'new']">Agregar vehículo</a></div>
-                @if (holder.vehicles.length === 0) { <p>No hay vehículos registrados</p> }
-                @else {
-                  <div class="table-wrapper"><table class="data-table"><caption class="visually-hidden">Vehículos registrados</caption><thead><tr><th scope="col">Patente</th><th scope="col">Marca y modelo</th><th scope="col">Año</th><th scope="col">Motor</th><th scope="col">Chasis</th><th scope="col">Cobertura</th><th scope="col">Acción</th></tr></thead><tbody>
-                    @for (vehicle of holder.vehicles; track vehicle.id) { <tr><td>{{ vehicle.plate }}</td><td>{{ vehicle.brand }} {{ vehicle.model }}</td><td>{{ vehicle.year }}</td><td>{{ vehicle.engine }}</td><td>{{ vehicle.chassis }}</td><td>{{ vehicle.covered ? 'Con cobertura' : 'Sin cobertura' }}</td><td><a [attr.aria-label]="'Editar ' + vehicle.plate" [routerLink]="['/policyholders', holder.id, 'vehicles', vehicle.id, 'edit']">Editar</a></td></tr> }
-                  </tbody></table></div>
-                }
-              </section>
-              <div class="holders-related">
-                <section class="card" aria-labelledby="policies-title"><h2 id="policies-title">Pólizas</h2>
-                  @if (holder.policies.length === 0) { <p>No hay pólizas</p> }
-                  @for (policy of holder.policies; track policy.number) { <article class="holders-record"><strong>{{ policy.number }}</strong> <app-status-badge [label]="policyStatus[policy.status].label" [tone]="policyStatus[policy.status].tone" /><p>{{ policy.coverageDescription || policy.vehiclePlates.join(', ') }} · {{ policy.vehiclePlates.join(', ') }}</p><small>{{ policy.startDate | date:'dd/MM/yyyy' }} al {{ policy.endDate | date:'dd/MM/yyyy' }}</small></article> }
-                </section>
-                <section class="card" aria-labelledby="claims-title"><h2 id="claims-title">Siniestros</h2>
-                  @if (holder.claims.length === 0) { <p>No hay siniestros denunciados</p> }
-                  @for (claim of holder.claims; track claim.number) { <article class="holders-record"><strong>{{ claim.number }}</strong> <app-status-badge [label]="claimStatus[claim.status].label" [tone]="claimStatus[claim.status].tone" /><p>{{ claim.vehiclePlate || 'No informado' }} · {{ claim.reason }}</p><small>Denunciado el {{ claim.reportedDate | date:'dd/MM/yyyy' }}</small></article> }
-                </section>
-              </div>
-              @if (confirming()) {
-                <div class="dialog-backdrop"><section class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="deactivate-title" aria-describedby="deactivate-message"><h2 id="deactivate-title">Dar de baja al asegurado</h2><p id="deactivate-message">¿Querés dar de baja a {{ holder.name }}?</p><div class="form-actions"><button class="button button--secondary" type="button" (click)="confirming.set(false)">Cancelar</button><button class="button button--danger" type="button" [disabled]="deleting()" (click)="deactivate(holder.id)">{{ deleting() ? 'Procesando…' : 'Confirmar baja' }}</button></div></section></div>
-              }
-            } @else { <p role="status" class="card">Cargando ficha…</p> }
-          }
-        }
-      }
-    </main>
-  </div>
-}
+<div class="policyholders-view"><header class="view-header"><div><span class="eyebrow">Gestión de asegurados</span><h1>Asegurados y vehículos</h1><p>Consultá y administrá asegurados, vehículos, pólizas y siniestros.</p></div>@if (authorized()) { <a class="button" routerLink="new">＋ Nuevo asegurado</a> }</header>
+@if (!authorized()) { <app-error-alert message="No tenés permiso para consultar asegurados" /> } @else {
+<div class="workspace"><aside class="results card" aria-label="Resultados de búsqueda"><div class="results__search"><app-policyholder-search (applied)="applySearch($event)" />@let list = listState();@if (list.status === 'ready') { <small>{{ list.data.totalItems }} asegurados encontrados</small> } @else if (list.status === 'empty') { <small>0 asegurados encontrados</small> }</div>
+@switch (list.status) {
+  @case ('loading') { <div class="results__body"><app-loading-state message="Cargando asegurados…" /></div> }
+  @case ('error') { <div class="results__body"><app-error-alert message="No pudimos cargar los asegurados. Intentá nuevamente" (retry)="reload()" /></div> }
+  @case ('empty') { <div class="results__body"><app-empty-state message="No se encontraron asegurados" /></div> }
+  @case ('ready') { <div class="results__body">@for (holder of list.data.items; track holder.id) { <button class="result-row" type="button" [class.result-row--active]="selectedId() === holder.id" [attr.aria-current]="selectedId() === holder.id ? 'true' : null" (click)="select(holder.id)"><span class="avatar">{{ initials(holder.name) }}</span><span class="result-row__text"><strong>{{ holder.name }}</strong><small>{{ documentLabel(holder) }} {{ holder.documentNumber }} · {{ holderStatus[holder.status].label }}</small></span><span class="status-dot" [class.status-dot--inactive]="holder.status === 'INACTIVE'" aria-hidden="true"></span></button> }</div><nav class="pagination" aria-label="Páginas de asegurados"><button class="button button--secondary" type="button" [disabled]="list.data.page === 0" (click)="goToPage(list.data.page - 1)">Anterior</button><span>{{ list.data.page + 1 }} de {{ list.data.totalPages }}</span><button class="button button--secondary" type="button" [disabled]="list.data.page + 1 >= list.data.totalPages" (click)="goToPage(list.data.page + 1)">Siguiente</button></nav> }
+}</aside>
+<main class="detail" aria-label="Ficha del asegurado">@if (list.status === 'ready') { @let detail = detailState(); @switch (detail.status) {
+  @case ('loading') { <app-loading-state message="Cargando la ficha…" /> }
+  @case ('error') { <app-error-alert message="No pudimos cargar los asegurados. Intentá nuevamente" (retry)="reload()" /> }
+  @case ('empty') { <app-loading-state message="Cargando la ficha…" /> }
+  @case ('ready') { @if (detail.data.id === selectedId()) { @let holder = detail.data;
+    <section class="card summary"><div class="summary__heading"><div><div class="summary__title"><h2>{{ holder.name }}</h2><app-status-badge [label]="holderStatus[holder.status].label" [tone]="holderStatus[holder.status].tone" /></div><p>{{ holder.personType === 'LEGAL_ENTITY' ? 'Persona jurídica' : 'Persona física' }} · {{ documentLabel(holder) }} {{ holder.documentNumber }}</p></div><a class="button button--secondary" [routerLink]="[holder.id, 'edit']">Editar datos</a></div><dl class="summary__fields"><div><dt>Contacto principal</dt><dd>{{ holder.primaryContact || 'No informado' }}</dd></div><div><dt>Correo electrónico</dt><dd>{{ holder.email || 'No informado' }}</dd></div><div><dt>Teléfono</dt><dd>{{ holder.phone || 'No informado' }}</dd></div><div><dt>Domicilio</dt><dd>{{ holder.address || 'No informado' }}</dd></div><div><dt>Vehículos registrados</dt><dd>{{ holder.vehicleCount }} vehículos</dd></div><div><dt>Pólizas vigentes</dt><dd>{{ holder.activePolicyCount }} pólizas</dd></div></dl><div class="summary__notice"><span>El {{ documentLabel(holder) }} debe ser único. {{ holder.activePolicyCount > 0 ? 'Este asegurado no puede darse de baja mientras tenga pólizas vigentes.' : '' }}</span>@if (holder.activePolicyCount === 0 && holder.status === 'ACTIVE') { <a class="button button--danger" [routerLink]="[holder.id, 'deactivate']">Dar de baja</a> } @else { <button class="button button--danger" type="button" disabled>Dar de baja</button> }</div></section>
+    <section class="card vehicles"><div class="section-heading"><div><h2>Vehículos</h2><p>{{ holder.vehicleCount }} registrados · La patente no puede repetirse.</p></div><a class="button" [routerLink]="[holder.id, 'vehicles', 'new']">+ Agregar vehículo</a></div>@if (holder.vehicles.length === 0) { <div class="section-empty"><app-empty-state message="No hay vehículos registrados" /></div> } @else { <div class="table-wrapper"><table class="data-table"><caption class="visually-hidden">Vehículos del asegurado</caption><thead><tr><th scope="col">Patente</th><th scope="col">Marca y modelo</th><th scope="col">Año</th><th scope="col">Motor</th><th scope="col">Chasis</th><th scope="col">Cobertura</th><th scope="col">Acción</th></tr></thead><tbody>@for (vehicle of holder.vehicles; track vehicle.id) { <tr><td><strong>{{ vehicle.plate }}</strong></td><td>{{ vehicle.brand }} {{ vehicle.model }}</td><td>{{ vehicle.year }}</td><td>{{ vehicle.engineNumber }}</td><td>{{ vehicle.chassisNumber }}</td><td><span [class.covered]="vehicle.covered" [class.uncovered]="!vehicle.covered">{{ vehicle.covered ? 'Con cobertura' : 'Sin cobertura' }}</span></td><td><a class="edit-link" [routerLink]="[holder.id, 'vehicles', vehicle.id, 'edit']" [attr.aria-label]="'Editar ' + vehicle.plate">Editar</a></td></tr> }</tbody></table></div> }</section>
+    <div class="related"><section class="card related__card"><h2>Pólizas</h2>@if (holder.policies.length === 0) { <app-empty-state message="No hay pólizas" /> } @else { @for (policy of holder.policies; track policy.number) { <article class="related__item"><div class="related__top"><strong>{{ policy.number }}</strong><app-status-badge [label]="policyStatus[policy.status]?.label || policy.status" [tone]="policyStatus[policy.status]?.tone || 'neutral'" /></div><p>{{ policy.coverageDescription }} · {{ vehiclePlates(holder, policy.vehicleIds) }}</p><small>{{ policy.startDate | date: 'dd/MM/yyyy' }} al {{ policy.endDate | date: 'dd/MM/yyyy' }}</small></article> } }</section><section class="card related__card"><h2>Siniestros</h2>@if (holder.claims.length === 0) { <app-empty-state message="No hay siniestros denunciados" /> } @else { @for (claim of holder.claims; track claim.number) { <article class="related__item"><div class="related__top"><strong>{{ claim.number }}</strong><app-status-badge [label]="claimStatus[claim.status]?.label || claim.status" [tone]="claimStatus[claim.status]?.tone || 'neutral'" /></div><p>{{ claim.vehiclePlate }} · {{ claim.reason }}</p><small>Denunciado el {{ claim.reportedDate | date: 'dd/MM/yyyy' }}</small></article> } }</section></div>
+  } }
+} }</main></div> }</div>

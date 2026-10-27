@@ -1,16 +1,15 @@
-export type VehicleUse = 'PERSONAL' | 'COMMERCIAL';
-export type PaymentMethod = 'AUTO_DEBIT' | 'OTHER';
-export type Coverage = 'CIVIL_LIABILITY' | 'COMPREHENSIVE_THIRD_PARTY' | 'COMPREHENSIVE_THIRD_PARTY_WITH_HAIL' | 'ALL_RISK_WITH_DEDUCTIBLE';
+export type VehicleUse = 'PRIVATE' | 'COMMERCIAL';
+export type PaymentMethod = 'AUTOMATIC_DEBIT' | 'OTHER';
+export type CoverageType = 'CIVIL_LIABILITY' | 'COMPREHENSIVE_THIRD_PARTY' | 'COMPREHENSIVE_THIRD_PARTY_HAIL' | 'ALL_RISK_WITH_DEDUCTIBLE';
+export type DiscountType = 'NO_CLAIMS' | 'AUTOMATIC_DEBIT';
 
-export interface VehicleOptionResponse {
+export interface VehicleResponse {
+  id: string;
   brand: string;
   model: string;
   version: string;
   year: number;
-}
-
-export interface VehicleCatalogResponse {
-  vehicles: VehicleOptionResponse[];
+  insuredValue: number;
 }
 
 export interface QuoteRequest {
@@ -22,40 +21,50 @@ export interface QuoteRequest {
   gnc: boolean;
   postalCode: string;
   birthDate: string;
-  licenseYears: number;
+  registrationYears: number;
   claimsLastThreeYears: number;
   paymentMethod: PaymentMethod;
   dni: string;
 }
 
 export interface CoverageResponse {
-  coverage: Coverage;
+  type: CoverageType;
+  name: string;
   monthlyPremium: number;
 }
 
 export interface DiscountResponse {
-  code: string;
-  percentage: number;
+  type: DiscountType;
+  name: string;
+  rate: number;
 }
 
-export interface QuoteResponse extends QuoteRequest {
+export interface QuoteResponse {
+  id: string;
   number: string;
   status: string;
-  createdAt: string;
-  expiresOn: string;
+  vehicle: VehicleResponse;
+  use: VehicleUse;
+  gnc: boolean;
+  postalCode: string;
+  birthDate: string;
+  registrationYears: number;
+  claimsLastThreeYears: number;
+  paymentMethod: PaymentMethod;
+  dni: string;
   insuredAmount: number;
   coverages: CoverageResponse[];
   discounts: DiscountResponse[];
+  createdAt: string;
+  updatedAt: string;
+  expiresOn: string;
 }
 
-export const COVERAGE_LABELS: Record<Coverage, string> = {
-  CIVIL_LIABILITY: 'Responsabilidad Civil',
-  COMPREHENSIVE_THIRD_PARTY: 'Terceros Completo',
-  COMPREHENSIVE_THIRD_PARTY_WITH_HAIL: 'Terceros Completo con Granizo',
-  ALL_RISK_WITH_DEDUCTIBLE: 'Todo Riesgo con franquicia',
-};
-
-export const DISCOUNT_LABELS: Record<string, string> = {
-  NO_CLAIMS: 'Sin siniestros en 3 años',
-  AUTO_DEBIT: 'Pago con débito automático',
-};
+export interface VehicleFilters {
+  brand?: string;
+  model?: string;
+  version?: string;
+  year?: number;
+  page: number;
+  size: number;
+}

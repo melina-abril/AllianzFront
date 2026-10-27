@@ -1,21 +1,21 @@
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { switchMap, startWith } from 'rxjs';
 import { ApiProblemError, errorMessage } from '../../../../core/http/api-error';
-import { PageHeader } from '../../../../shared/components/page-header';
+import { EmptyState } from '../../../../shared/components/empty-state';
+import { ErrorAlert } from '../../../../shared/components/error-alert';
+import { LoadingState } from '../../../../shared/components/loading-state';
 import { LoadState } from '../../../../shared/models/load-state';
+import { Page } from '../../../../shared/models/page';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { toLoadState } from '../../../../shared/utils/to-load-state';
 import { QuotesService } from '../../data-access/quotes.service';
-import { COVERAGE_LABELS, DISCOUNT_LABELS, PaymentMethod, QuoteRequest, QuoteResponse, VehicleCatalogResponse, VehicleOptionResponse, VehicleUse } from '../../models/quotes.models';
-
-type QuoteField = keyof QuoteRequest;
+import { PaymentMethod, QuoteRequest, QuoteResponse, VehicleResponse, VehicleUse } from '../../models/quotes.models';
 
 @Component({
   selector: 'app-quote-page',
-  imports: [ReactiveFormsModule, DatePipe, MoneyPipe, PageHeader],
+  imports: [ReactiveFormsModule, DatePipe, MoneyPipe, LoadingState, EmptyState, ErrorAlert],
   templateUrl: './quote-page.html',
   styleUrl: './quote-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,167 +23,143 @@ type QuoteField = keyof QuoteRequest;
 export class QuotePage {
   private readonly service = inject(QuotesService);
   private readonly builder = inject(NonNullableFormBuilder);
-  protected readonly coverageLabels = COVERAGE_LABELS;
-  protected readonly discountLabels = DISCOUNT_LABELS;
-  protected readonly currentYear = new Date().getFullYear();
 
   protected readonly form = this.builder.group({
-    brand: ['', Validators.required],
-    model: ['', Validators.required],
-    version: ['', Validators.required],
-    year: [0, [Validators.required, Validators.min(1900), Validators.max(this.currentYear)]],
-    use: ['PERSONAL' as VehicleUse, Validators.required],
-    gnc: [false],
-    postalCode: ['', [Validators.required, Validators.pattern(/^[0-9]{4}$/)]],
+    brand: ['', Validators.required], model: ['', Validators.required], version: ['', Validators.required],
+    year: [0, [Validators.required, Validators.min(1900)]],
+    use: ['PRIVATE' as VehicleUse, Validators.required], gnc: [false],
+    postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
     birthDate: ['', Validators.required],
-    licenseYears: [0, [Validators.required, Validators.min(0), Validators.pattern(/^[0-9]+$/)]],
-    claimsLastThreeYears: [0, [Validators.required, Validators.min(0), Validators.pattern(/^[0-9]+$/)]],
-    paymentMethod: ['AUTO_DEBIT' as PaymentMethod, Validators.required],
-    dni: ['', [Validators.required, Validators.pattern(/^[0-9]{7,8}$/)]],
+    registrationYears: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
+    claimsLastThreeYears: [0, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
+    paymentMethod: ['AUTOMATIC_DEBIT' as PaymentMethod, Validators.required],
+    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
   });
   protected readonly recoveryForm = this.builder.group({
     number: ['', Validators.required],
-    dni: ['', [Validators.required, Validators.pattern(/^[0-9]{7,8}$/)]],
+    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
   });
-  private readonly selection = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue())), {
-    initialValue: this.form.getRawValue(),
-  });
-  private readonly catalogRefresh = signal(0);
   protected readonly catalogState = toSignal(
-    toObservable(this.catalogRefresh).pipe(switchMap(() => toLoadState(this.service.getVehicleCatalog()))),
-    { initialValue: { status: 'loading' } as LoadState<VehicleCatalogResponse> },
+    toLoadState(this.service.listQuotableVehicles({ page: 0, size: 100 })),
+    { initialValue: { status: 'loading' } as LoadState<Page<VehicleResponse>> },
   );
   protected readonly quote = signal<QuoteResponse | null>(null);
   protected readonly saving = signal(false);
   protected readonly recovering = signal(false);
   protected readonly saveError = signal<string | null>(null);
   protected readonly recoveryError = signal<string | null>(null);
-  protected readonly formMessage = signal<string | null>(null);
   private readonly serverErrors = signal<Record<string, string[]>>({});
 
-  protected readonly availableVehicles = computed(() => {
-    const state = this.catalogState();
-    return state.status === 'ready' ? state.data.vehicles.filter(vehicle => vehicle.year <= this.currentYear) : [];
-  });
-  protected readonly brands = computed(() => [...new Set(this.availableVehicles().map(vehicle => vehicle.brand))]);
-  protected readonly models = computed(() => {
-    const brand = this.selection().brand;
-    return [...new Set(this.availableVehicles().filter(vehicle => vehicle.brand === brand).map(vehicle => vehicle.model))];
-  });
-  protected readonly versions = computed(() => {
-    const selected = this.selection();
-    return [...new Set(this.availableVehicles().filter(vehicle => vehicle.brand === selected.brand && vehicle.model === selected.model).map(vehicle => vehicle.version))];
-  });
-  protected readonly years = computed(() => {
-    const selected = this.selection();
-    return this.availableVehicles().filter(vehicle => vehicle.brand === selected.brand && vehicle.model === selected.model && vehicle.version === selected.version).map(vehicle => vehicle.year);
-  });
+  protected brands(vehicles: VehicleResponse[]): string[] {
+    return [...new Set(vehicles.map(vehicle => vehicle.brand))];
+  }
 
-  protected resetAfterBrand(): void {
+  protected models(vehicles: VehicleResponse[]): string[] {
+    return [...new Set(vehicles.filter(vehicle => vehicle.brand === this.form.controls.brand.value).map(vehicle => vehicle.model))];
+  }
+
+  protected versions(vehicles: VehicleResponse[]): string[] {
+    return [...new Set(vehicles.filter(vehicle => vehicle.brand === this.form.controls.brand.value &&
+      vehicle.model === this.form.controls.model.value).map(vehicle => vehicle.version))];
+  }
+
+  protected years(vehicles: VehicleResponse[]): number[] {
+    return vehicles.filter(vehicle => vehicle.brand === this.form.controls.brand.value &&
+      vehicle.model === this.form.controls.model.value && vehicle.version === this.form.controls.version.value &&
+      vehicle.year <= new Date().getFullYear()).map(vehicle => vehicle.year);
+  }
+
+  protected brandChanged(): void {
     this.form.patchValue({ model: '', version: '', year: 0 });
   }
-  protected resetAfterModel(): void {
+
+  protected modelChanged(): void {
     this.form.patchValue({ version: '', year: 0 });
   }
-  protected resetAfterVersion(): void {
+
+  protected versionChanged(): void {
     this.form.patchValue({ year: 0 });
   }
-  protected reloadCatalog(): void {
-    this.catalogRefresh.update(value => value + 1);
-  }
 
-  protected errorFor(field: QuoteField): string {
+  protected errorFor(field: keyof QuoteRequest): string {
     const server = this.serverErrors()[field]?.[0];
     if (server) return server;
     const control = this.form.controls[field];
-    if (!control.touched || control.valid) return '';
-    if (control.hasError('required')) return 'Este campo es obligatorio.';
-    if (field === 'postalCode') return 'Ingresá un código postal de cuatro dígitos.';
-    if (field === 'dni') return 'Ingresá un DNI de siete u ocho dígitos.';
-    return 'Ingresá un valor válido.';
+    if (!control.touched || !control.errors) return '';
+    if (control.hasError('required')) return 'Este dato es obligatorio.';
+    if (field === 'postalCode') return 'Ingresá cuatro dígitos.';
+    if (field === 'dni') return 'Ingresá siete u ocho dígitos.';
+    return 'Revisá este dato.';
   }
 
   protected recoveryErrorFor(field: 'number' | 'dni'): string {
     const control = this.recoveryForm.controls[field];
-    if (!control.touched || control.valid) return '';
-    return control.hasError('required') ? 'Este campo es obligatorio.' : 'Ingresá un DNI de siete u ocho dígitos.';
+    if (!control.touched || !control.errors) return '';
+    return control.hasError('required') ? 'Este dato es obligatorio.' : 'Ingresá siete u ocho dígitos.';
   }
 
-  private validVehicle(value: QuoteRequest): boolean {
-    return this.availableVehicles().some((vehicle: VehicleOptionResponse) => vehicle.brand === value.brand &&
-      vehicle.model === value.model && vehicle.version === value.version && vehicle.year === value.year);
-  }
-
-  protected submit(): void {
+  protected save(vehicles: VehicleResponse[]): void {
     this.serverErrors.set({});
-    this.saveError.set(null);
-    this.formMessage.set(null);
-    const value: QuoteRequest = this.form.getRawValue();
+    const value = this.form.getRawValue();
     const birth = new Date(`${value.birthDate}T00:00:00`);
-    const birthValid = value.birthDate !== '' && Number.isFinite(birth.getTime()) &&
-      birth.toISOString().slice(0, 10) === value.birthDate && birth < new Date();
-    const age = birthValid ? (Date.now() - birth.getTime()) / 31557600000 : 0;
-    const valid = this.form.valid && birthValid && Number.isInteger(value.licenseYears) &&
-      value.licenseYears <= age && Number.isInteger(value.claimsLastThreeYears) && this.validVehicle(value);
-    if (!valid) {
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear() -
+      (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
+    if (this.form.invalid || !value.birthDate || Number.isNaN(birth.getTime()) ||
+      birth.toISOString().slice(0, 10) !== value.birthDate || birth >= today ||
+      !Number.isInteger(value.registrationYears) || !Number.isInteger(value.claimsLastThreeYears) ||
+      value.registrationYears > age) {
       this.form.markAllAsTouched();
-      const errors: Record<string, string[]> = {};
-      if (!birthValid) errors['birthDate'] = ['Ingresá una fecha real anterior a hoy.'];
-      if (value.licenseYears > age || !Number.isInteger(value.licenseYears)) errors['licenseYears'] = ['Los años de registro no pueden superar la edad y deben ser enteros.'];
-      if (!Number.isInteger(value.claimsLastThreeYears)) errors['claimsLastThreeYears'] = ['Ingresá un número entero.'];
-      if (!this.validVehicle(value)) errors['year'] = ['Seleccioná una combinación disponible del catálogo.'];
-      this.serverErrors.set(errors);
-      this.formMessage.set('Revisá los datos indicados para cotizar');
+      this.saveError.set('Revisá los datos indicados para cotizar');
       return;
     }
+    if (!vehicles.some(vehicle => vehicle.brand === value.brand && vehicle.model === value.model &&
+      vehicle.version === value.version && vehicle.year === Number(value.year))) {
+      this.saveError.set('No hay vehículos disponibles para esta selección');
+      return;
+    }
+    const request: QuoteRequest = { ...value, year: Number(value.year),
+      registrationYears: Number(value.registrationYears), claimsLastThreeYears: Number(value.claimsLastThreeYears) };
     this.saving.set(true);
+    this.saveError.set(null);
     const current = this.quote();
-    const operation = current ? this.service.updateQuote(current.number, value) : this.service.createQuote(value);
-    operation.subscribe({
-      next: saved => {
-        this.quote.set(saved);
-        this.saving.set(false);
-      },
+    (current ? this.service.updateQuote(current.id, request) : this.service.createQuote(request)).subscribe({
+      next: result => { this.quote.set(result); this.saving.set(false); },
       error: (error: unknown) => {
         this.saving.set(false);
-        if (error instanceof ApiProblemError && error.fieldErrors && Object.keys(error.fieldErrors).length) {
-          this.serverErrors.set(error.fieldErrors);
-          this.form.markAllAsTouched();
-          this.formMessage.set('Revisá los datos indicados para cotizar');
-        } else {
-          this.saveError.set('No pudimos actualizar la cotización. Intentá nuevamente');
-        }
+        if (error instanceof ApiProblemError) this.serverErrors.set(error.fieldErrors);
+        this.saveError.set(error instanceof ApiProblemError && Object.keys(error.fieldErrors).length
+          ? 'Revisá los datos indicados para cotizar'
+          : 'No pudimos actualizar la cotización. Intentá nuevamente');
       },
     });
   }
 
   protected recover(): void {
-    this.recoveryError.set(null);
     if (this.recoveryForm.invalid) {
       this.recoveryForm.markAllAsTouched();
       return;
     }
     const { number, dni } = this.recoveryForm.getRawValue();
-    this.quote.set(null);
     this.recovering.set(true);
-    this.service.recoverQuote(number.trim(), dni).subscribe({
-      next: recovered => {
-        this.quote.set(recovered);
-        this.form.reset({
-          brand: recovered.brand, model: recovered.model, version: recovered.version, year: recovered.year,
-          use: recovered.use, gnc: recovered.gnc, postalCode: recovered.postalCode,
-          birthDate: recovered.birthDate, licenseYears: recovered.licenseYears,
-          claimsLastThreeYears: recovered.claimsLastThreeYears, paymentMethod: recovered.paymentMethod,
-          dni: recovered.dni,
-        });
-        this.serverErrors.set({});
-        this.formMessage.set(null);
+    this.recoveryError.set(null);
+    this.service.retrieveQuote(number.trim(), dni.trim()).subscribe({
+      next: result => {
+        this.quote.set(result);
+        this.form.reset({ brand: result.vehicle.brand, model: result.vehicle.model,
+          version: result.vehicle.version, year: result.vehicle.year, use: result.use, gnc: result.gnc,
+          postalCode: result.postalCode, birthDate: result.birthDate,
+          registrationYears: result.registrationYears, claimsLastThreeYears: result.claimsLastThreeYears,
+          paymentMethod: result.paymentMethod, dni: result.dni });
         this.saveError.set(null);
+        this.serverErrors.set({});
         this.recovering.set(false);
       },
       error: (error: unknown) => {
+        this.quote.set(null);
         this.recovering.set(false);
-        this.recoveryError.set(errorMessage(error));
+        this.recoveryError.set(error instanceof ApiProblemError && (error.status === 404 || error.status === 422)
+          ? errorMessage(error) : 'No pudimos recuperar la cotización. Intentá nuevamente');
       },
     });
   }
