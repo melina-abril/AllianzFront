@@ -33,8 +33,6 @@ export class QuotesService {
 
   retrieveQuote(id: string, dni: string): Observable<QuoteResponse> {
     if (environment.useMock) return retrieveQuoteMock(id, dni);
-    return this.http.get<QuoteResponse>(apiUrl(`/api/quotes/${encodeURIComponent(id)}`), {
-      params: new HttpParams().set('dni', dni),
-    });
+    return this.http.get<QuoteResponse>(apiUrl(`/api/quotes/${encodeURIComponent(id)}`), { params: new HttpParams().set('dni', dni) });
   }
 }

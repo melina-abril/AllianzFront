@@ -15,25 +15,21 @@
             "outputPath": "dist/app",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [],
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "styles": ["src/styles.scss"],
-            "assets": []
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
+              "optimization": true,
               "outputHashing": "all"
             },
             "development": {
               "optimization": false,
-              "sourceMap": true,
-              "extractLicenses": false
+              "sourceMap": true
             },
             "backend": {
               "optimization": false,
               "sourceMap": true,
-              "extractLicenses": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

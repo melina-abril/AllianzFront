@@ -1,12 +1,12 @@
 import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import localeEs from '@angular/common/locales/es';
+import localeEsAr from '@angular/common/locales/es-AR';
 import { ApplicationConfig, LOCALE_ID, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { apiErrorInterceptor } from './core/http/api-error.interceptor';
 import { appRoutes } from './app.routes';
 
-registerLocaleData(localeEs, 'es-AR');
+registerLocaleData(localeEsAr);
 
 export const appConfig: ApplicationConfig = {
   providers: [

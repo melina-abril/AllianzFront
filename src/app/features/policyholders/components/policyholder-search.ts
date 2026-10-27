@@ -5,8 +5,8 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
   selector: 'app-policyholder-search',
   imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<form [formGroup]="form" (ngSubmit)="apply()" role="search"><label for="policyholder-search">Buscar asegurado</label><div class="search-box"><span aria-hidden="true">⌕</span><input id="policyholder-search" type="search" formControlName="search" placeholder="Nombre, DNI o CUIT" /></div><button class="visually-hidden" type="submit">Buscar</button></form>`,
-  styles: `label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 10px; } .search-box { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--text-secondary); } input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--text-primary); font: inherit; outline: none; } input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }`
+  template: `<form [formGroup]="form" (ngSubmit)="apply()" role="search" class="search-form"><label for="buscar-asegurado">Buscar asegurado</label><div class="search-form__row"><input id="buscar-asegurado" type="search" formControlName="search" placeholder="Nombre, DNI o CUIT" /><button type="submit" class="button">Buscar</button></div></form>`,
+  styles: `.search-form label { display:block; font-size:14px; font-weight:700; margin-bottom:10px; } .search-form__row { display:flex; gap:8px; } .search-form input { min-width:0; flex:1; border:1px solid var(--border); border-radius:9px; padding:10px 12px; color:var(--text-primary); background:var(--surface); font:inherit; } .search-form .button { min-height:44px; }`,
 })
 export class PolicyholderSearch {
   readonly applied = output<string>();

@@ -1,28 +1,27 @@
 <div class="app-shell">
   <header class="app-header">
     <a class="app-brand" routerLink="/quotes" aria-label="Allianz, ir al cotizador">Allianz</a>
-    <div class="app-account">
-      <span class="app-account__name">{{ currentUser.user().name }}</span>
+    <div class="app-session">
+      <span class="app-session__name">{{ currentUser.user().name }}</span>
       <label for="test-role">Rol de prueba</label>
-      <select id="test-role" #roleSelect [value]="currentUser.user().role" (change)="changeRole(roleSelect.value)">
-        <option value="insured">Asegurado</option>
-        <option value="producer">Productor asesor</option>
-        <option value="operator">Operador de emisión</option>
-        <option value="adjuster">Liquidador de siniestros</option>
-        <option value="supervisor">Supervisor</option>
+      <select id="test-role" [value]="currentUser.user().role" (change)="onRoleChange($event)">
+        @for (role of roles; track role.value) {
+          <option [value]="role.value">{{ role.label }}</option>
+        }
       </select>
     </div>
   </header>
+
   <div class="app-body">
-    <nav class="app-nav" aria-label="Navegación principal">
-      <p class="app-nav__heading">Secciones</p>
+    <nav class="app-sidebar" aria-label="Navegación principal">
+      <p class="app-sidebar__heading">Funcionalidades</p>
       @for (item of navigation; track item.path) {
         @if (currentUser.hasRole(item.roles)) {
-          <a [routerLink]="item.path" routerLinkActive="app-nav__link--active" class="app-nav__link" [attr.aria-label]="item.label">{{ item.label }}</a>
+          <a class="app-nav-link" [routerLink]="item.path" routerLinkActive="app-nav-link--active" [routerLinkActiveOptions]="{ exact: false }">{{ item.label }}</a>
         }
       }
     </nav>
-    <main class="app-content" id="main-content">
+    <main class="app-main" id="main-content">
       <router-outlet />
     </main>
   </div>
