@@ -1,19 +1,18 @@
-# Allianz — seguros de auto
+# Allianz
 
-Frontend Angular con componentes standalone, signals y datos simulados por defecto. Requiere Node.js compatible con Angular 22.
+Frontend Angular 22 para cotizar seguros de auto y gestionar asegurados y vehículos.
 
-```sh
-npm install
-npm start
-```
+## Ejecutar
 
-Abrí la URL local indicada por Angular. No hace falta iniciar el backend: `src/environments/environment.ts` configura `useMock: true`.
+1. Instalá las dependencias con `npm install`.
+2. Iniciá la aplicación con `npm start`. Por defecto utiliza datos simulados y no requiere backend.
+3. Abrí la dirección local indicada por Angular en la terminal.
 
-Para usar el backend local en `http://localhost:8080`, ejecutá `npm run start:backend`; esta configuración desactiva los mocks y redirige `/api` mediante `proxy.conf.json`. Para generar la aplicación: `npm run build`.
+Para conectar el backend local en `http://localhost:8080`, ejecutá `npm run start:backend`. Esta configuración desactiva los mocks y redirige `/api` mediante `proxy.conf.json`. Para generar una compilación de producción, ejecutá `npm run build`.
 
-## Funcionalidades
+## Módulos
 
-- **Cotizador de seguro de auto** (`/quotes`): cotización y recuperación por número y DNI.
-- **Asegurados y vehículos** (`/policyholders`): búsqueda y gestión de asegurados y sus vehículos.
+- **Cotizador de seguro de auto** (`/quotes`): cotización y recuperación de propuestas.
+- **Asegurados y vehículos** (`/policyholders`): búsqueda, alta y administración de asegurados y sus vehículos.
 
-El encabezado permite cambiar el rol de prueba. La navegación muestra las funcionalidades disponibles para ese rol.
+El selector de rol del encabezado permite probar la navegación disponible para asegurados, productores, operadores, liquidadores y supervisores.

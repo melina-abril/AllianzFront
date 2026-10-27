@@ -12,24 +12,28 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "src/main.ts",
+            "outputPath": "dist/app",
             "index": "src/index.html",
-            "styles": ["src/styles.scss"],
+            "browser": "src/main.ts",
+            "polyfills": [],
             "tsConfig": "tsconfig.app.json",
-            "outputPath": "dist/app"
+            "inlineStyleLanguage": "scss",
+            "styles": ["src/styles.scss"],
+            "assets": []
           },
           "configurations": {
             "production": {
-              "optimization": true,
               "outputHashing": "all"
             },
             "development": {
               "optimization": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "extractLicenses": false
             },
             "backend": {
               "optimization": false,
               "sourceMap": true,
+              "extractLicenses": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -42,18 +46,21 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {
-            "proxyConfig": "proxy.conf.json"
-          },
           "configurations": {
-            "development": { "buildTarget": "app:build:development" },
-            "production": { "buildTarget": "app:build:production" },
-            "backend": { "buildTarget": "app:build:backend" }
+            "development": {
+              "buildTarget": "app:build:development"
+            },
+            "production": {
+              "buildTarget": "app:build:production"
+            },
+            "backend": {
+              "buildTarget": "app:build:backend",
+              "proxyConfig": "proxy.conf.json"
+            }
           },
           "defaultConfiguration": "development"
         }
       }
     }
-  },
-  "cli": { "analytics": false }
+  }
 }

@@ -1,25 +1,60 @@
-.quote-reference { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 15rem; }
-.quote-reference span { font-size: .8rem; color: var(--color-text-muted); }
-.quote-reference strong { font-size: 1.2rem; }
-.quote-layout { display: grid; grid-template-columns: minmax(18rem, 23rem) minmax(0, 1fr); align-items: start; gap: var(--space-lg); }
-.quote-form h2, .quote-summary h2, .quote-recovery h2 { margin-top: 0; }
-.quote-form h3 { margin-top: var(--space-lg); }
-.quote-form .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.quote-form .form-field { min-width: 0; }
-.quote-results { min-width: 0; display: grid; gap: var(--space-md); }
-.quote-summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
-.quote-summary p, .quote-recovery p { color: var(--color-text-muted); }
-.quote-summary small, .quote-summary strong { display: block; }
-.quote-summary strong { margin-top: var(--space-xs); font-size: 1.3rem; }
-.quote-notice { margin: 0; padding: var(--space-md); background: #fbeaea; border-radius: .5rem; }
-.quote-coverages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
-.quote-coverage { min-height: 10rem; display: flex; flex-direction: column; justify-content: space-between; }
-.quote-coverage h3 { margin-top: 0; }
-.quote-coverage span, .quote-coverage strong { display: block; }
-.quote-coverage strong { font-size: 1.5rem; }
-.quote-discounts p { display: flex; justify-content: space-between; gap: var(--space-md); }
-.quote-recovery { margin-top: var(--space-lg); }
-.quote-recovery form { display: flex; align-items: end; gap: var(--space-md); flex-wrap: wrap; }
-.quote-recovery .form-field { flex: 1 1 9rem; }
-@media (max-width: 850px) { .quote-layout { grid-template-columns: 1fr; } }
-@media (max-width: 520px) { .quote-form .form-grid, .quote-coverages { grid-template-columns: 1fr; } .quote-recovery form .button { width: 100%; } }
+.quote-page { max-width: 1200px; margin: 0 auto; padding: 32px; display: flex; flex-direction: column; gap: 24px; background: var(--color-background, var(--background, #f7f7f8)); color: var(--color-text, var(--text-primary, #17171d)); box-sizing: border-box; }
+.quote-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-border, var(--border, #e4e4e8)); }
+.quote-brand { color: var(--color-primary, var(--primary, #f21818)); font-size: 14px; font-weight: 700; letter-spacing: .03em; }
+h1 { font-size: 30px; line-height: 1.2; letter-spacing: -.025em; margin: 12px 0 8px; }
+.quote-header p, .panel-heading p, .results-heading span, .recovery p { margin: 0; color: var(--color-text-muted, var(--text-secondary, #6b6b75)); font-size: 13px; line-height: 1.5; }
+.quote-ticket, .quote-panel, .results-heading, .coverage-card, .discount-card, .recovery { background: var(--color-surface, var(--surface, #fff)); border: 1px solid var(--color-border, var(--border, #e4e4e8)); border-radius: 14px; }
+.quote-ticket { min-width: 255px; padding: 16px 20px; display: flex; flex-direction: column; gap: 7px; box-sizing: border-box; box-shadow: 0 2px 10px var(--color-border, var(--border, #e4e4e8)); }
+.quote-ticket > span, .ticket-top { font-size: 12px; color: var(--color-text-muted, var(--text-secondary, #6b6b75)); }
+.ticket-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.saved-badge { border-radius: 20px; padding: 4px 9px; background: var(--color-success, var(--success, #00ff5e)); color: var(--color-text, var(--text-primary, #17171d)); font-weight: 700; }
+.quote-ticket strong { font-size: 18px; }
+.quote-layout { display: grid; grid-template-columns: minmax(310px, 380px) minmax(0, 1fr); align-items: start; gap: 24px; }
+.quote-panel { overflow: hidden; box-shadow: 0 3px 16px var(--color-border, var(--border, #e4e4e8)); }
+.panel-heading { padding: 18px 20px; background: var(--color-soft-background, var(--soft-background, #fbeaea)); border-bottom: 1px solid var(--color-border, var(--border, #e4e4e8)); }
+.panel-heading h2, .results-heading h2, .recovery h2 { color: var(--color-primary, var(--primary, #f21818)); margin: 0 0 5px; }
+.panel-heading h2 { font-size: 17px; }
+.panel-heading p { font-size: 12px; }
+.panel-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+legend { font-size: 14px; font-weight: 700; padding: 0 0 12px; }
+.driver-fields { border-top: 1px solid var(--color-border, var(--border, #e4e4e8)); padding-top: 20px; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.form-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 12px; font-weight: 600; }
+.form-field input, .form-field select { width: 100%; height: 42px; box-sizing: border-box; border: 1px solid var(--color-border, var(--border, #e4e4e8)); border-radius: 8px; padding: 0 10px; background: var(--color-surface, var(--surface, #fff)); color: var(--color-text, var(--text-primary, #17171d)); font: inherit; font-size: 13px; }
+.form-field [aria-invalid='true'] { border-color: var(--color-danger, var(--error, #f21818)); }
+.form-field__error, .feedback, .recovery-error { color: var(--color-danger, var(--error, #f21818)); font-size: 12px; }
+.feedback { margin: 0; }
+.submit-button { width: 100%; min-height: 46px; }
+.results { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.results-heading { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.results-heading h2 { font-size: 20px; }
+.insured-amount { text-align: right; white-space: nowrap; }
+.insured-amount small { display: block; font-size: 11px; color: var(--color-text-muted, var(--text-secondary, #6b6b75)); }
+.insured-amount strong { font-size: 19px; }
+.results-note { margin: 0; padding: 11px 14px; border-radius: 8px; background: var(--color-soft-background, var(--soft-background, #fbeaea)); font-size: 12px; }
+.coverage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.coverage-card { min-height: 192px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; box-shadow: 0 3px 16px var(--color-border, var(--border, #e4e4e8)); }
+.coverage-title { display: flex; align-items: flex-start; gap: 12px; }
+.coverage-title h3 { font-size: 15px; line-height: 1.4; margin: 5px 0 0; }
+.shield { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: var(--color-soft-background, var(--soft-background, #fbeaea)); color: var(--color-primary, var(--primary, #f21818)); }
+.coverage-card div:last-child > span { display: block; font-size: 12px; color: var(--color-text-muted, var(--text-secondary, #6b6b75)); }
+.coverage-card div:last-child > strong { display: block; font-size: 26px; letter-spacing: -.025em; }
+.discount-card { padding: 18px 22px; display: flex; justify-content: space-between; gap: 20px; }
+.discount-card > div { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.discount-card > div > strong { font-size: 13px; }
+.discount-card span, .discount-card small { color: var(--color-text-muted, var(--text-secondary, #6b6b75)); }
+.discount-values { text-align: right; white-space: nowrap; }
+.discount-values span { font-weight: 700; color: var(--color-text, var(--text-primary, #17171d)); }
+.results-placeholder { padding: 28px; border-radius: 14px; background: var(--color-surface, var(--surface, #fff)); color: var(--color-text-muted, var(--text-secondary, #6b6b75)); }
+.recovery { padding: 20px 24px; display: flex; align-items: end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.recovery-intro { max-width: 340px; }
+.recovery h2 { font-size: 16px; }
+.recovery form { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+.recovery form .form-field:first-child { width: 190px; }
+.recovery form .form-field:nth-child(2) { width: 140px; }
+.recovery form button { min-height: 42px; }
+.recovery-error { width: 100%; margin: 0; }
+@media (max-width: 900px) { .quote-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .quote-page { padding: 16px; } .quote-header, .results-heading { flex-direction: column; align-items: stretch; } .insured-amount { text-align: left; } .coverage-grid { grid-template-columns: 1fr; } .field-grid { gap: 8px; } .recovery form, .recovery form .form-field:first-child, .recovery form .form-field:nth-child(2), .recovery form button { width: 100%; } }
